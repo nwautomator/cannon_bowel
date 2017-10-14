@@ -33,6 +33,16 @@ import sys,os
 from math import exp as exp
 
 
+
+#
+# use pickle.dump(instance,file)
+#  and pickle.load(file)
+#
+# to save and restore data. file is a Python FILE object so 
+# it's opened first.
+#
+#
+
 class rbm:  #the basic rbm
   def __init__(me, number_visible, number_hidden):
     me.nvis = number_visible 
@@ -47,6 +57,54 @@ class rbm:  #the basic rbm
         me.layers.append(np.float32(np.zeros(number_visible)))
         me.hidden.append(0)
         me.energies.append(0.) 
+
+
+  def reconstruct(me, data, use_best = True):
+    the_layer = me.the_best_layer(data) 
+    ib = the_layer[0]
+    a = me.layers[ib]
+    sign = 1.
+    if me.hidden[ib] < 0.:
+       sign = -1.
+#
+# there may be a clever numpy solution for this loop
+#
+    for i in range(0,me.nvis):
+       me.scratch[i] = 1.
+       if a[i] < 0.:
+           me.scratch[i] = -1.
+    return me.scratch.__mul__(sign) 
+
+
+
+  def the_best_layer(me, data, use_best = True):
+    if use_best:
+      me.assign_hidden_and_reconstruction_energy(data)
+    else:
+      me.assign_hidden_and_energy(data)
+    ib = 0
+    eb = me.energies[0]
+    for i in range(1,me.nhid):
+       if me.energies[i] < eb:
+          ib = i
+          eb = me.energies[i]
+    return ib,eb
+
+
+  def assign_hidden_and_reconstruction_energy(me, data):
+    for i in range(0, me.nhid):
+       eraw = np.dot( data, me.layers[i])
+       ebest = np.dot( data.__abs__(), (me.layers[i]).__abs__())
+       if ebest == 0.0:
+          ebest = 1.0
+       if eraw > 0.:
+          me.hidden[i] = -1.0
+          me.energies[i] = -eraw/ebest
+       else:
+          me.hidden[i] = 1.0
+          me.energies[i] = eraw/ebest
+
+
   def assign_hidden_and_energy(me, data):
     for i in range(0, me.nhid):
        eraw = np.dot( data, me.layers[i])
@@ -57,13 +115,16 @@ class rbm:  #the basic rbm
           me.hidden[i] = 1.0
           me.energies[i] = eraw
 
-  def trainOmatic(me,data,beta,learning_rate):
-      me.train(data,beta,learning_rate)
-      me.antitrain(data,beta,learning_rate*0.1)
+  def trainOmatic(me,data,beta,learning_rate,use_best = True):
+      me.train(data,beta,learning_rate,use_best)
+      me.antitrain(data,beta,learning_rate*0.1,use_best)
 
 
-  def train(me,data,beta,learning_rate):
-    me.assign_hidden_and_energy(data)
+  def train(me,data,beta,learning_rate, use_best = True):
+    if use_best:
+      me.assign_hidden_and_reconstruction_energy(data)
+    else:
+      me.assign_hidden_and_energy(data)
 # select the row to train.
     imin = 0
     emin = me.energies[0]
@@ -89,8 +150,11 @@ class rbm:  #the basic rbm
       alayer[i] += learning_rate*( -hv + damp)
 
 
-  def antitrain(me,data,beta,learning_rate):
-    me.assign_hidden_and_energy(data)
+  def antitrain(me,data,beta,learning_rate,use_best = True):
+    if use_best:
+      me.assign_hidden_and_reconstruction_energy(data)
+    else:
+      me.assign_hidden_and_energy(data)
 # select the row to train.
     imax = 0
     emax = me.energies[0]
@@ -129,6 +193,12 @@ def main():
    for i in range(1,10):
      my_rbm.train(d, 0.1, 0.1)
      print(my_rbm.layers)   
+
+   d[0] = 0.
+   print(my_rbm.reconstruct(d))
+   d[0] = 1.
+   d[1] = 0.
+   print(my_rbm.reconstruct(d))
 
 
 main()
