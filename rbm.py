@@ -32,6 +32,7 @@ import numpy as np
 import sys,os
 from math import exp as exp
 
+import fuzzy
 
 
 #
@@ -59,6 +60,11 @@ class rbm:  #the basic rbm
         me.energies.append(0.) 
 
 
+  def add_fuzzy(me, thmin,thmax,thenumber):
+    me.fuzz = []
+    for i in range(0, me.nhid):
+        me.fuzz.append( fuzzy.fuzzy(thmin,thmax,thenumber))
+
   def reconstruct(me, data, use_best = True):
     the_layer = me.the_best_layer(data) 
     ib = the_layer[0]
@@ -76,7 +82,6 @@ class rbm:  #the basic rbm
     return me.scratch.__mul__(sign) 
 
 
-
   def the_best_layer(me, data, use_best = True):
     if use_best:
       me.assign_hidden_and_reconstruction_energy(data)
@@ -89,6 +94,12 @@ class rbm:  #the basic rbm
           ib = i
           eb = me.energies[i]
     return ib,eb
+
+  def estimate_EV( me, data, use_best = True):
+    for i in me.fuzz:
+      print( i.expected_value())
+    ib = (me.the_best_layer(data, use_best))[0]
+    return me.fuzz[ib].expected_value()
 
 
   def assign_hidden_and_reconstruction_energy(me, data):
@@ -120,6 +131,40 @@ class rbm:  #the basic rbm
       me.antitrain(data,beta,learning_rate*0.1,use_best)
 
 
+# this is the online one pass algorithm
+  def train_fuzzy(me,data,beta,learning_rate,dependent_value, use_best = True):
+    if len(me.fuzz) == 0:
+       print("You Must define fuzzy first to use this")
+    if use_best:
+      me.assign_hidden_and_reconstruction_energy(data)
+    else:
+      me.assign_hidden_and_energy(data)
+# select the row to train.
+    imin = 0
+    emin = me.energies[0]
+    for i in range(1,me.nhid):
+      if emin >= me.energies[i] :
+         imin = i
+         emin = me.energies[i]
+#
+# emin,imin now point to the best row
+#    
+    hsign = me.hidden[imin]
+    alayer = me.layers[imin]
+    me.fuzz[imin].add(dependent_value)
+# the products with hsign keep the +- straight.
+# for the gradients that is.
+    for i in range(0, me.nvis): # over the row
+      ef = alayer[i]*hsign*data[i]
+      ep = ef*beta*hsign
+      em = -ep
+      fp = exp(-ep)
+      fm = exp(-em)
+      damp = (fp-fm)/(fp+fm)  *hsign  *data[i]
+      hv = hsign *data[i]
+      alayer[i] += learning_rate*( -hv + damp)
+
+
   def train(me,data,beta,learning_rate, use_best = True):
     if use_best:
       me.assign_hidden_and_reconstruction_energy(data)
@@ -129,7 +174,7 @@ class rbm:  #the basic rbm
     imin = 0
     emin = me.energies[0]
     for i in range(1,me.nhid):
-      if emin > me.energies[i] :
+      if emin >= me.energies[i] :
          imin = i
          emin = me.energies[i]
 #
@@ -200,5 +245,17 @@ def main():
    d[1] = 0.
    print(my_rbm.reconstruct(d))
 
+   my_rbm.layers[0] = np.array([-1.,1.])
+   my_rbm.layers[1] = np.array([1.,1.])
+   my_rbm.add_fuzzy(-1., 1., 20)
+   print(my_rbm.layers)   
+   d[0] = 1.; d[1] = -1.
+   my_rbm.train_fuzzy(d, 0.1, 0.1, 0.4)
+   d[0] = 1.; d[1] = 1.
+   my_rbm.train_fuzzy(d, 0.1, 0.1, -0.4)
+   print(my_rbm.layers)   
+   print(d,my_rbm.estimate_EV(d))
+   d[0] = 1.; d[1] = -1.
+   print(d,my_rbm.estimate_EV(d))
 
 main()
