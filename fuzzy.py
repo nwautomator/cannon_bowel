@@ -76,13 +76,23 @@ class fuzzy:
 #       dsum += me.counts[i]*dx
 #       dx += me.delta
 #    return dsum/ds 
-    em = me.counts[0]
-    im = 0
-    for i in range(1,me.counts.shape[0]):
-       if em < me.counts[i] :
-             im = i
-             em - me.counts[i]
+#    em = me.counts[0]
+#    im = 0
+#    for i in range(1,me.counts.shape[0]):
+#       if em < me.counts[i] :
+#             im = i
+#             em - me.counts[i]
+# use numpy you dumb fsck
+    im = np.argmax(me.counts)
     return float(im)*me.delta + me.my_min
+       
+  def belief(me):
+    ds = me.counts.sum()
+    if ds == 0.:
+       return (me.my_min + me.my_max)*0.5,0.
+# use numpy you dumb fsck
+    im = float(np.argmax(me.counts))
+    return (im*me.delta + me.my_min),im/ds
        
      
     

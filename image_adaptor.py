@@ -34,9 +34,11 @@ import sys,os
 class adaptor:
   def __init__(me, half_width, nsigma, an_array):
     me.width = 1 + 2*half_width  #must be odd x odd to work
-    mean = an_array.mean()
-    scale = an_array.std()
-    me.the_image = np.clip( (an_array.__sub__(mean)).__mul__(float(nsigma)/scale), -1., 1.)
+# keep this so I can undo it later if I want
+    me.mean = an_array.mean()
+    me.scale = an_array.std()
+    me.nsigma = nsigma
+    me.the_image = np.clip( (an_array.__sub__(me.mean)).__mul__(float(nsigma)/me.scale), -1., 1.)
     me.scratch = np.float32(np.zeros( (me.width, me.width)))
     me.half = half_width
     me.ix = 0
@@ -44,6 +46,8 @@ class adaptor:
     me.nx = me.scratch.shape[0]
     me.ny = me.scratch.shape[1]
 
+  def to_original(me, apixel):
+    return apixel*me.scale/(float(me.sigma)) + me.mean
 
   def next(me, dx,dy=0):
     jx = me.ix +dx
