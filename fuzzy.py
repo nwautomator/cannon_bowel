@@ -55,6 +55,7 @@ class fuzzy:
     me.my_min = the_min
     me.my_max = the_max
     me.delta = (the_max-the_min)/the_number_of_divisions
+    me.nd = the_number_of_divisions
     me.counts = np.float32(np.zeros(the_number_of_divisions))
 
   def initialize_counts(me):
@@ -63,6 +64,10 @@ class fuzzy:
   def add(me, what):
     i = int(( what - me.my_min)/me.delta +0.5)
 # insert rangechecking here.
+    if i >= me.nd:
+      i = me.nd -1
+    if i < 0:
+      i = 0
     me.counts[i] += 1.
 
 

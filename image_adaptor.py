@@ -55,6 +55,7 @@ class adaptor:
 
   def next(me, dx,dy=0):
     jx = me.ix +dx
+    jy = me.iy
     if dy == 0 :
       if jx > me.nx - me.width:
           jy = me.iy + 1
