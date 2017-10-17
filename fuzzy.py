@@ -116,4 +116,4 @@ def main():
   print( simon.expected_value()) 
   
 
-main()
+#main()

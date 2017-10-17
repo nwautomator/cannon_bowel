@@ -38,7 +38,7 @@ class adaptor:
     me.mean = an_array.mean()
     me.scale = an_array.std()
     me.nsigma = nsigma
-    me.the_image = np.clip( (an_array.__sub__(me.mean)).__mul__(float(nsigma)/me.scale), -1., 1.)
+    me.the_image = np.clip( (an_array.__sub__(me.mean)).__div__(float(nsigma)*me.scale), -1., 1.)
     me.scratch = np.float32(np.zeros( (me.width* me.width)))
     me.half = half_width
     me.ix = 0
@@ -47,7 +47,7 @@ class adaptor:
     me.ny = me.the_image.shape[1]
 
   def to_original(me, apixel):
-    return apixel*me.scale/(float(me.sigma)) + me.mean
+    return apixel*me.scale*(float(me.sigma)) + me.mean
 
   def reset(me):
       me.ix = 0
@@ -72,7 +72,7 @@ class adaptor:
     return (True, me.the_image[ me.ix + me.half][me.iy+me.half], scratch) 
 
 
-def main():
-   print("Test method for adaptor")
+#def main():
+#   print("Test method for adaptor")
 
-main()
+#main()

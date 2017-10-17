@@ -258,4 +258,4 @@ def main():
    d[0] = 1.; d[1] = -1.
    print(d,my_rbm.estimate_EV(d))
 
-main()
+#main()
