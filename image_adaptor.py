@@ -69,7 +69,7 @@ class adaptor:
       inx = i*me.width
       for j in range(0, me.width):
         me.scratch[inx +j] = me.the_image[me.ix+i][me.iy+j]
-    return (True, me.the_image[ me.ix + me.half][me.iy+me.half], scratch) 
+    return (True, me.the_image[ me.ix + me.half][me.iy+me.half], me.scratch) 
 
 
 #def main():
