@@ -49,6 +49,10 @@ class adaptor:
   def to_original(me, apixel):
     return apixel*me.scale/(float(me.sigma)) + me.mean
 
+  def reset(me):
+      me.ix = 0
+      me.iy = 0
+
   def next(me, dx,dy=0):
     jx = me.ix +dx
     if dy == 0 :
