@@ -39,12 +39,12 @@ class adaptor:
     me.scale = an_array.std()
     me.nsigma = nsigma
     me.the_image = np.clip( (an_array.__sub__(me.mean)).__mul__(float(nsigma)/me.scale), -1., 1.)
-    me.scratch = np.float32(np.zeros( (me.width, me.width)))
+    me.scratch = np.float32(np.zeros( (me.width* me.width)))
     me.half = half_width
     me.ix = 0
     me.iy = 0
-    me.nx = me.scratch.shape[0]
-    me.ny = me.scratch.shape[1]
+    me.nx = me.the_image.shape[0]
+    me.ny = me.the_image.shape[1]
 
   def to_original(me, apixel):
     return apixel*me.scale/(float(me.sigma)) + me.mean
@@ -66,9 +66,10 @@ class adaptor:
     me.ix = jx
     me.iy = jy
     for i in range(0, me.width):
+      inx = i*me.width
       for j in range(0, me.width):
-        me.scratch[i][j] = me.the_image[me.ix+i][me.iy+j]
-    return (True, me.scratch[ me.ix + me.half][me.iy+me.half], scratch) 
+        me.scratch[inx +j] = me.the_image[me.ix+i][me.iy+j]
+    return (True, me.the_image[ me.ix + me.half][me.iy+me.half], scratch) 
 
 
 def main():
