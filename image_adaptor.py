@@ -29,6 +29,7 @@ SOFTWARE.
 
 import numpy as np
 import sys,os
+from random import random as random
 
 
 class adaptor:
@@ -53,6 +54,16 @@ class adaptor:
       me.ix = 0
       me.iy = 0
 
+  def random(me):
+    rx = int(random()*(me.nx - me.width))
+    ry = int(random()*(me.ny - me.width))
+    for i in range(0, me.width):
+      inx = i*me.width
+      for j in range(0, me.width):
+        me.scratch[inx +j] = me.the_image[rx+i][ry+j]
+    return (True, me.the_image[ rx + me.half][ry+me.half], me.scratch) 
+   
+
   def next(me, dx,dy=0):
     jx = me.ix +dx
     jy = me.iy
@@ -62,7 +73,7 @@ class adaptor:
           jx = 0
     else:
        jy = me.iy + dy
-    if jy > me.ny - me.width or jy > me.nx - me.width:
+    if jy >= me.ny - me.width or jx >= me.nx - me.width:
        return (False, 0.,me.scratch)  
     me.ix = jx
     me.iy = jy

@@ -63,21 +63,38 @@ def main():
     the_image = np.zeros_like(layers[0])
     the_image = np.add(the_image, layers[40])
 # nvis,nhid
-    the_rbm = rbm.rbm(  (15*2+1)*(15*2+1), 10)
-    the_rbm.add_fuzzy(-1., 1., 30)
-    the_adapted_image = adapt.adaptor(  15, 7., the_image)
-    for l in the_rbm.layers:
-        l = np.add(l, the_adapted_image.next(15,15)[2])
+    the_rbm = rbm.rbm(  (15*2+1)*(15*2+1), 100)
+    the_rbm.add_fuzzy(-1., 1., 21)
+    the_rbm.reinitialize_fuzzy()
+    the_adapted_image = adapt.adaptor(  15, 3., the_image)
+#    for l in the_rbm.layers:
+#        l = np.add(l, the_adapted_image.next(15,15)[2])
+#    for l in range(0, len(the_rbm.layers)):
+#       the_rbm.layers[l] = np.add( the_rbm.layers[l], the_adapted_image.next(1,1)[2])
     the_adapted_image.reset()
     
     print("training starts")
     sys.stdout.flush()
-    a = the_adapted_image.next(1)
+  #  a = the_adapted_image.next(1)
+    for i in range(0,1000):
+       a = the_adapted_image.random()
+       the_rbm.train(a[2],0.1,0.5,a[1])
+       print(i, a[1])
+
+    a = the_adapted_image.random()
     i = 0
+    j = 0
+    errs = np.float32(np.zeros(100))
     while( a[0] ):
-        the_rbm.train_fuzzy(a[2],0.1,0.1,a[1])
-        a = the_adapted_image.next(1)
-        print(i)
+        the_rbm.train_fuzzy(a[2],0.1,0.5,a[1])
+        if i == 1000:
+           the_rbm.reinitialize_fuzzy()
+        errs[j] += a[1]-the_rbm.estimate_EV(a[2])
+        j = (j+1)%100
+        print(i,a[1], errs.std())
+#        print(i, a[1], the_rbm.estimate_EV(a[2]))
+#        a = the_adapted_image.next(1,1)
+        a = the_adapted_image.random()
         sys.stdout.flush()
         i += 1
     print("training stops")

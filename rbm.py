@@ -65,6 +65,10 @@ class rbm:  #the basic rbm
     for i in range(0, me.nhid):
         me.fuzz.append( fuzzy.fuzzy(thmin,thmax,thenumber))
 
+  def reinitialize_fuzzy(me):
+     for i in range(0, me.nhid):
+        me.fuzz[i].initialize_counts()
+
   def reconstruct(me, data, use_best = True):
     the_layer = me.the_best_layer(data) 
     ib = the_layer[0]
@@ -96,8 +100,8 @@ class rbm:  #the basic rbm
     return ib,eb
 
   def estimate_EV( me, data, use_best = True):
-    for i in me.fuzz:
-      print( i.expected_value())
+#    for i in me.fuzz:
+#      print( i.expected_value())
     ib = (me.the_best_layer(data, use_best))[0]
     return me.fuzz[ib].expected_value()
 
@@ -107,7 +111,11 @@ class rbm:  #the basic rbm
        eraw = np.dot( data, me.layers[i])
        ebest = np.dot( data.__abs__(), (me.layers[i]).__abs__())
        if ebest == 0.0:
-          ebest = 1.0
+#          ebest = 1.0
+# this forces the RBM to train this layer.
+          me.energies[i] = -10.e10
+          me.hidden[i] = -1.0
+          return
        if eraw > 0.:
           me.hidden[i] = -1.0
           me.energies[i] = -eraw/ebest
@@ -143,6 +151,7 @@ class rbm:  #the basic rbm
     imin = 0
     emin = me.energies[0]
     for i in range(1,me.nhid):
+  #    print( emin, me.energies[i])
       if emin >= me.energies[i] :
          imin = i
          emin = me.energies[i]
@@ -233,9 +242,12 @@ def main():
    print(my_rbm.layers)   
    d = np.full(2,1.)
    d[0] = -1.0
-   my_rbm.trainOmatic(d, 0.1, 0.1)
-   print(my_rbm.layers)   
+#   my_rbm.train(d, 0.1, 0.1)
+#   print(my_rbm.layers)   
    for i in range(1,10):
+     d[0] = 1.; d[1] = -1.
+     my_rbm.train(d, 0.1, 0.1)
+     d[0] = 1.; d[1] = 1.
      my_rbm.train(d, 0.1, 0.1)
      print(my_rbm.layers)   
 
