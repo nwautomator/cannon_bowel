@@ -89,7 +89,7 @@ def main():
         the_rbm.train_fuzzy(a[2],0.1,0.5,a[1])
         if i == 1000:
            the_rbm.reinitialize_fuzzy()
-        errs[j] += a[1]-the_rbm.estimate_EV(a[2])
+        errs[j] = a[1]-the_rbm.estimate_EV(a[2])
         j = (j+1)%100
         print(i,a[1], errs.std())
 #        print(i, a[1], the_rbm.estimate_EV(a[2]))

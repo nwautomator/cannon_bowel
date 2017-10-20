@@ -63,24 +63,27 @@ class fuzzy:
 
   def add(me, what):
     i = int(( what - me.my_min)/me.delta +0.5)
+#    print(what,i)
 # insert rangechecking here.
     if i >= me.nd:
       i = me.nd -1
     if i < 0:
       i = 0
     me.counts[i] += 1.
+#    print(me.counts)
+    sys.stdout.flush()
 
 
   def expected_value(me):
     ds = me.counts.sum()
     if ds == 0.:
        return (me.my_min + me.my_max)*0.5
-#    dx = me.my_min 
-#    dsum = 0.
-#    for i in range(0, me.counts.shape[0]):
-#       dsum += me.counts[i]*dx
-#       dx += me.delta
-#    return dsum/ds 
+    dsum = 0.
+    ddi = len(me.counts)/2
+    for i in range(0, len(me.counts)):
+       dx = (i-ddi) *me.delta
+       dsum += me.counts[i]*dx
+    return dsum/ds  
 #    em = me.counts[0]
 #    im = 0
 #    for i in range(1,me.counts.shape[0]):
@@ -88,8 +91,8 @@ class fuzzy:
 #             im = i
 #             em - me.counts[i]
 # use numpy you dumb fsck
-    im = np.argmax(me.counts)
-    return float(im)*me.delta + me.my_min
+#    im = np.argmax(me.counts)
+#    return float(im)*me.delta + me.my_min
        
   def belief(me):
     ds = me.counts.sum()
