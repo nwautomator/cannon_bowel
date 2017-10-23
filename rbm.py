@@ -51,6 +51,7 @@ class rbm:  #the basic rbm
     me.layers = []
     me.energies = []
     me.hidden = []
+    me.symmetric_encoding = False
 # initialize the space
 # making essentially empty lists means that we can avoid using append etc
     me.scratch = np.full(number_visible,0.0)
@@ -85,6 +86,8 @@ class rbm:  #the basic rbm
            me.scratch[i] = -1.
     return me.scratch.__mul__(sign) 
 
+  def its_symmetric(me):
+      me.symmetric_encoding = True
 
   def the_best_layer(me, data, use_best = True):
     if use_best:
@@ -94,15 +97,13 @@ class rbm:  #the basic rbm
     ib = 0
     eb = me.energies[0]
     for i in range(1,me.nhid):
-       if me.energies[i] < eb:
+       if me.energies[i] <= eb:
           ib = i
           eb = me.energies[i]
     return ib,eb
 
   def estimate_EV( me, data, use_best = True):
-#    for i in me.fuzz:
-#      print( i.expected_value())
-    ib = (me.the_best_layer(data, use_best))[0]
+    ib = me.the_best_layer(data,use_best)[0]
     return me.fuzz[ib].expected_value()
 
 
@@ -114,25 +115,33 @@ class rbm:  #the basic rbm
 #          ebest = 1.0
 # this forces the RBM to train this layer.
           me.energies[i] = -10.e10
-          me.hidden[i] = -1.0
-          return
-       if eraw > 0.:
-          me.hidden[i] = -1.0
-          me.energies[i] = -eraw/ebest
+#         me.energies[i] = 0.0
+          me.hidden[i] =  1.0
+       elif  me.symmetric_encoding:
+            me.hidden[i] = 1.0
+            me.energies[i] = eraw/ebest
        else:
-          me.hidden[i] = 1.0
-          me.energies[i] = eraw/ebest
+         if eraw > 0.:
+            me.hidden[i] = -1.0
+            me.energies[i] = -eraw/ebest
+         else:
+            me.hidden[i] = 1.0
+            me.energies[i] = eraw/ebest
 
 
   def assign_hidden_and_energy(me, data):
     for i in range(0, me.nhid):
        eraw = np.dot( data, me.layers[i])
-       if eraw > 0.:
-          me.hidden[i] = -1.0
-          me.energies[i] = -eraw
+       if me.symmetric_encoding:
+            me.hidden[i] = 1.0
+            me.energies[i] = eraw
        else:
-          me.hidden[i] = 1.0
-          me.energies[i] = eraw
+         if eraw > 0.:
+            me.hidden[i] = -1.0
+            me.energies[i] = -eraw
+         else:
+            me.hidden[i] = 1.0
+            me.energies[i] = eraw
 
   def trainOmatic(me,data,beta,learning_rate,use_best = True):
       me.train(data,beta,learning_rate,use_best)
@@ -160,9 +169,15 @@ class rbm:  #the basic rbm
 #    
     hsign = me.hidden[imin]
     alayer = me.layers[imin]
+#    print(me.fuzz[imin].counts)
+#    fdamp = me.fuzz[imin].damp(dependent_value)
+#    if fdamp > 0:
     me.fuzz[imin].add(dependent_value)
+#    print(me.fuzz[imin].counts)
+#    sys.stdout.flush()
 # the products with hsign keep the +- straight.
 # for the gradients that is.
+#    learning_rate = learning_rate*fdamp
     for i in range(0, me.nvis): # over the row
       ef = alayer[i]*hsign*data[i]
       ep = ef*beta*hsign
@@ -172,7 +187,6 @@ class rbm:  #the basic rbm
       damp = (fp-fm)/(fp+fm)  *hsign  *data[i]
       hv = hsign *data[i]
       alayer[i] += learning_rate*( -hv + damp)
-
 
   def train(me,data,beta,learning_rate, use_best = True):
     if use_best:
@@ -186,6 +200,8 @@ class rbm:  #the basic rbm
       if emin >= me.energies[i] :
          imin = i
          emin = me.energies[i]
+    print(emin)
+    sys.stdout.flush()
 #
 # emin,imin now point to the best row
 #    

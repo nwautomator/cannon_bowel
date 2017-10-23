@@ -70,26 +70,22 @@ class fuzzy:
     if i < 0:
       i = 0
     me.counts[i] += 1.
-#    print(me.counts)
-    sys.stdout.flush()
+#    print(what,me.counts[i],i)
+#    sys.stdout.flush()
 
 
   def expected_value(me):
     ds = me.counts.sum()
     if ds == 0.:
-       return (me.my_min + me.my_max)*0.5
+       ds = 1.
+       print me.counts
+#       return (me.my_min + me.my_max)*0.5
     dsum = 0.
     ddi = len(me.counts)/2
     for i in range(0, len(me.counts)):
        dx = (i-ddi) *me.delta
        dsum += me.counts[i]*dx
     return dsum/ds  
-#    em = me.counts[0]
-#    im = 0
-#    for i in range(1,me.counts.shape[0]):
-#       if em < me.counts[i] :
-#             im = i
-#             em - me.counts[i]
 # use numpy you dumb fsck
 #    im = np.argmax(me.counts)
 #    return float(im)*me.delta + me.my_min
@@ -102,8 +98,19 @@ class fuzzy:
     im = float(np.argmax(me.counts))
     return (im*me.delta + me.my_min),im/ds
        
-     
-    
+  def damp(me, avalue):
+    ds = me.counts.sum()
+    if ds == 0.:
+       return 1.
+    im = int((avalue - me.my_min)/(me.my_max-me.my_min)+0.5)
+    if im >= me.nd:
+      im = me.nd -1
+    if im < 0:
+      im = 0
+    i = np.argmax(me.counts)
+    if abs(i-im) < 2:
+       return 1.
+    return -0.1 
 
 def main():
   print("this is the main routine, defined for testing purposes")

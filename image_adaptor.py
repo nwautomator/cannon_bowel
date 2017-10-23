@@ -47,12 +47,56 @@ class adaptor:
     me.nx = me.the_image.shape[0]
     me.ny = me.the_image.shape[1]
 
+  def tobits(me,  depth): 
+      i = pow(2,depth)     
+      me.bits = []
+      k = -1.
+      for j in range(0,i):
+          me.bits.append([k])
+          k = -k
+# did bit zero by itself because %1
+      for l in range(1,depth):
+          k = -1.
+          sign = 0
+          sign_mod = pow(2,l) 
+          for j in range(0,i):
+             me.bits[j].append(k)
+             sign = sign + 1
+             if sign%sign_mod == 0:
+                 k = -k
+      me.range_delta = float(i-1) #avoid picket fence
+      me.nbits = depth
+  def make_nbit_image(me, depth):
+     me.tobits( depth)
+     me.scratch = np.float32(np.zeros( (me.width* me.width*depth)))
+     ma = me.the_image.max()
+     mi = me.the_image.min()
+     me.indexes = np.uint8(np.zeros_like(me.the_image))
+     for i in range(0,me.nx):
+        for j in range(0,me.ny):
+           me.indexes[i][j] = int( (me.the_image[i][j]-mi)/(ma-mi)*me.range_delta)
+#           print( me.indexes[i][j], (me.the_image[i][j]-mi)/(ma-mi),me.the_image[i][j])
+
+
+
   def to_original(me, apixel):
     return apixel*me.scale*(float(me.sigma)) + me.mean
 
   def reset(me):
       me.ix = 0
       me.iy = 0
+
+  def random_bits(me):
+    rx = int(random()*(me.nx - me.width))
+    ry = int(random()*(me.ny - me.width))
+    for i in range(0, me.width):
+      inx = i*me.width*me.nbits
+      for j in range(0, me.width):
+        inj = j*me.nbits
+        for k in range(0,me.nbits):
+          me.scratch[inx +inj + k ] = (me.bits[me.indexes[rx+i][ry+j]])[k]
+    return (True, me.the_image[ rx + me.half][ry+me.half], me.scratch) 
+   
 
   def random(me):
     rx = int(random()*(me.nx - me.width))

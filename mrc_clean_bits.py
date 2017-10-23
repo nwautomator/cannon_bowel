@@ -63,42 +63,58 @@ def main():
     the_image = np.zeros_like(layers[0])
     the_image = np.add(the_image, layers[40])
 # nvis,nhid
-    hw = 1
-    the_rbm = rbm.rbm(  (hw*2+1)*(hw*2+1), 10)
+    hw = 5
+    nb = 2
+    the_rbm = rbm.rbm(  (hw*2+1)*(hw*2+1)*nb, 1000)
+    the_rbm.its_symmetric()
     the_rbm.add_fuzzy(-1., 1., 21)
-    the_rbm.reinitialize_fuzzy()
+#    the_rbm.reinitialize_fuzzy()
     the_adapted_image = adapt.adaptor(  hw, 3., the_image)
-#    the_adapted_image.make_nbit_image(3)
+    the_adapted_image.make_nbit_image(nb)
 #    for l in the_rbm.layers:
 #        l = np.add(l, the_adapted_image.next(15,15)[2])
-#    for l in range(0, len(the_rbm.layers)):
-#       the_rbm.layers[l] = np.add( the_rbm.layers[l], the_adapted_image.next(1,1)[2])
+    for l in range(0, len(the_rbm.layers)):
+       the_rbm.layers[l] = np.add( the_rbm.layers[l], the_adapted_image.random_bits()[2])
     the_adapted_image.reset()
     
     
     print("training starts")
     sys.stdout.flush()
   #  a = the_adapted_image.next(1)
-    for i in range(0,1000):
-       a = the_adapted_image.random()
-       the_rbm.train(a[2],0.1,0.5,a[1])
+    for i in xrange(0,10000):
+       a = the_adapted_image.random_bits()
+       the_rbm.train(a[2],0.1,1.0,a[1])
        print(i, a[1])
 
-    a = the_adapted_image.random()
+    a = the_adapted_image.random_bits()
     i = 0
     j = 0
     errs = np.float32(np.zeros(100))
+#    the_rbm.reinitialize_fuzzy()
     while( a[0] ):
         the_rbm.train_fuzzy(a[2],0.1,0.5,a[1])
-        if i == 1000:
-           the_rbm.reinitialize_fuzzy()
+#        if i == 1000:
+#           the_rbm.reinitialize_fuzzy()
         x = the_rbm.estimate_EV(a[2])
         errs[j] = a[1]-x
         j = (j+1)%100
         print(i,a[1],x,  errs.std())
+#from here
+#        k = 0
+#	while abs(x-a[1]) > 0.1:
+#          the_rbm.train_fuzzy(a[2],0.1,0.5,a[1])
+#          x = the_rbm.estimate_EV(a[2])
+##          j = (j+1)%100
+#          errs[j] = a[1]-x
+#          print(i,a[1],x,  errs.std())
+#          k = k + 1
+#          if k > 100: 
+#            break
+#tohere
+
 #        print(i, a[1], the_rbm.estimate_EV(a[2]))
 #        a = the_adapted_image.next(1,1)
-        a = the_adapted_image.random()
+        a = the_adapted_image.random_bits()
         sys.stdout.flush()
         i += 1
     print("training stops")
