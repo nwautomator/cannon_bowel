@@ -78,7 +78,7 @@ class fuzzy:
     ds = me.counts.sum()
     if ds == 0.:
        ds = 1.
-       print me.counts
+#       print me.counts
 #       return (me.my_min + me.my_max)*0.5
     dsum = 0.
     ddi = len(me.counts)/2

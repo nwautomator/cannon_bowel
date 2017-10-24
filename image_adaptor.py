@@ -50,6 +50,9 @@ class adaptor:
   def tobits(me,  depth): 
       i = pow(2,depth)     
       me.bits = []
+      me.from_bits = []
+      for j in range(0,depth):
+        me.from_bits.append(pow(2,j)*0.5)
       k = -1.
       for j in range(0,i):
           me.bits.append([k])
@@ -66,6 +69,13 @@ class adaptor:
                  k = -k
       me.range_delta = float(i-1) #avoid picket fence
       me.nbits = depth
+
+  def bits_to_density(me, bits):
+     ac = 0.
+     for i in range(0,me.nbits):
+         ac = ac + me.from_bits[i]*(bits[i] + 1.)
+     return ac
+
   def make_nbit_image(me, depth):
      me.tobits( depth)
      me.scratch = np.float32(np.zeros( (me.width* me.width*depth)))
@@ -101,6 +111,23 @@ class adaptor:
   def random(me):
     rx = int(random()*(me.nx - me.width))
     ry = int(random()*(me.ny - me.width))
+    for i in range(0, me.width):
+      inx = i*me.width
+      for j in range(0, me.width):
+        me.scratch[inx +j] = me.the_image[rx+i][ry+j]
+    return (True, me.the_image[ rx + me.half][ry+me.half], me.scratch) 
+
+  def at_bits(me,rx,ry):
+    for i in range(0, me.width):
+      inx = i*me.width*me.nbits
+      for j in range(0, me.width):
+        inj = j*me.nbits
+        for k in range(0,me.nbits):
+          me.scratch[inx +inj + k ] = (me.bits[me.indexes[rx+i][ry+j]])[k]
+    return (True, me.the_image[ rx + me.half][ry+me.half], me.scratch) 
+   
+
+  def at(me,rx,ry):
     for i in range(0, me.width):
       inx = i*me.width
       for j in range(0, me.width):

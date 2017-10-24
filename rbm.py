@@ -71,7 +71,7 @@ class rbm:  #the basic rbm
         me.fuzz[i].initialize_counts()
 
   def reconstruct(me, data, use_best = True):
-    the_layer = me.the_best_layer(data) 
+    the_layer = me.the_best_layer(data,use_best) 
     ib = the_layer[0]
     a = me.layers[ib]
     sign = 1.
@@ -81,9 +81,9 @@ class rbm:  #the basic rbm
 # there may be a clever numpy solution for this loop
 #
     for i in range(0,me.nvis):
-       me.scratch[i] = 1.
+       me.scratch[i] = -1.
        if a[i] < 0.:
-           me.scratch[i] = -1.
+           me.scratch[i] =  1.
     return me.scratch.__mul__(sign) 
 
   def its_symmetric(me):
@@ -187,6 +187,7 @@ class rbm:  #the basic rbm
       damp = (fp-fm)/(fp+fm)  *hsign  *data[i]
       hv = hsign *data[i]
       alayer[i] += learning_rate*( -hv + damp)
+    return emin
 
   def train(me,data,beta,learning_rate, use_best = True):
     if use_best:
@@ -200,8 +201,8 @@ class rbm:  #the basic rbm
       if emin >= me.energies[i] :
          imin = i
          emin = me.energies[i]
-    print(emin)
-    sys.stdout.flush()
+#    print(emin)
+#    sys.stdout.flush()
 #
 # emin,imin now point to the best row
 #    
@@ -218,6 +219,7 @@ class rbm:  #the basic rbm
       damp = (fp-fm)/(fp+fm)  *hsign  *data[i]
       hv = hsign *data[i]
       alayer[i] += learning_rate*( -hv + damp)
+    return emin
 
 
   def antitrain(me,data,beta,learning_rate,use_best = True):
