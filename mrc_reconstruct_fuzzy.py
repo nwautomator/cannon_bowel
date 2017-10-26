@@ -133,7 +133,7 @@ def main():
              if bt[1] < -1.:
                 bt[1] = 0.
              if bt[1] < b:
-                b = bt
+                b = bt[1]
                 r = f.rbm
                 fb = f
           x = r.estimate_EV( a[2])
