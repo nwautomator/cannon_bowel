@@ -125,14 +125,20 @@ def main():
           a = the_adapted_image.at_bits(i,j)
           r = the_fuzz[0].rbm
           b = 1.
+          fb = the_fuzz[0]
           for f in the_fuzz:
              bt = f.rbm.the_best_layer( a[2])
-             if bt < b:
+#             print( bt[1],b)
+# catch untrained examples
+             if bt[1] < -1.:
+                bt[1] = 0.
+             if bt[1] < b:
                 b = bt
                 r = f.rbm
+                fb = f
           x = r.estimate_EV( a[2])
           new_image[i][j] = x
-          print( x, a[1])
+          print( x, a[1], fb.centre)
           sys.stdout.flush()
           
 #
