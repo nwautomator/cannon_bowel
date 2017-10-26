@@ -130,10 +130,11 @@ def main():
              bt = f.rbm.the_best_layer( a[2])
 #             print( bt[1],b)
 # catch untrained examples
-             if bt[1] < -1.:
-                bt[1] = 0.
-             if bt[1] < b:
-                b = bt[1]
+             tb = bt[1]
+             if tb < -1.:
+                tb = 0.
+             if tb < b:
+                b = tb
                 r = f.rbm
                 fb = f
           x = r.estimate_EV( a[2])
