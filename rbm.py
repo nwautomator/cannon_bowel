@@ -102,6 +102,21 @@ class rbm:  #the basic rbm
           eb = me.energies[i]
     return ib,eb
 
+  def the_best_built_layer(me, data, use_best = True):
+    if use_best:
+      me.assign_hidden_and_reconstruction_energy(data)
+    else:
+      me.assign_hidden_and_energy(data)
+    ib = 0
+    eb = 10.e10
+    for i in range(0,me.nhid):
+       if me.energies[i] < -1.0 and use_best:
+          me.energies[i] = 10.e10
+       if me.energies[i] <= eb:
+          ib = i
+          eb = me.energies[i]
+    return ib,eb
+
   def estimate_EV( me, data, use_best = True):
     ib = me.the_best_layer(data,use_best)[0]
     return me.fuzz[ib].expected_value()

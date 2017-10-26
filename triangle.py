@@ -52,9 +52,9 @@ class triangle:
       if x > my.upper:
          return 0.0
       if x > my.centre:
-         return (x-my.centre)/my.upper_d
+         return 1.-(x-my.centre)/my.upper_d
       else:
-         return (my.centre-x)/my.lower_d
+         return 1.-(my.centre-x)/my.lower_d
 
 # this will associate anything, but
   def associate_rbm(my, an_rbm):

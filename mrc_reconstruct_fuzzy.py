@@ -65,18 +65,20 @@ def main():
        layers.append(np.float32(layer))
 #layers are the arrays containing the data.
     the_image = np.zeros_like(layers[0])
-    the_image = np.add(the_image, layers[40])
+    the_image = np.add(the_image, layers[180])
 # nvis,nhid set the size of the rbm
-    hw = 3
+    hw = 2
+    hw = 1
+    hw = 2
     nb = 3
 # the number of outer fuzzy sets
-    nfuzz = 10
+    nfuzz = 21
     the_fuzz = []
     delta = 2./(nfuzz-1)
     for i in range(0,nfuzz):
-        cent = -1. + 2.*i*delta
-        the_fuzz.append( triangle.triangle( cent-delta*2,cent, cent+delta*2))
-        the_fuzz[i].associate_rbm( rbm.rbm( (hw*2+1)*(hw*2+1)*nb, 10))
+        cent = -1. + i*delta
+        the_fuzz.append( triangle.triangle( cent-delta,cent, cent+delta))
+        the_fuzz[i].associate_rbm( rbm.rbm( (hw*2+1)*(hw*2+1)*nb, 100))
         the_fuzz[i].rbm.its_symmetric()
         the_fuzz[i].rbm.add_fuzzy(-1.,1.,21)
 #    the_rbm = rbm.rbm(  (hw*2+1)*(hw*2+1)*nb, 1000)
@@ -104,7 +106,7 @@ def main():
             
     print("fuzzy pass")
     sys.stdout.flush() 
-    for i in xrange(0,2000):
+    for i in xrange(0,10000):
        a = the_adapted_image.random_bits()
        for f in the_fuzz:
           rate = f.belief(a[1])
@@ -116,8 +118,8 @@ def main():
     sys.stdout.flush()
     
     new_image = np.float32(np.zeros_like(the_image))
-#    for i in xrange(0, the_image.shape[0]-2*hw-1):
-    for i in xrange(0, 20):
+    for i in xrange(0, the_image.shape[0]-2*hw-1):
+#    for i in xrange(0, 20):
       print("layer", i)
       sys.stdout.flush()
       for j in range(0,the_image.shape[1]-2*hw-1):
@@ -127,20 +129,23 @@ def main():
           b = 1.
           fb = the_fuzz[0]
           for f in the_fuzz:
-             bt = f.rbm.the_best_layer( a[2])
+             bt = f.rbm.the_best_built_layer( a[2])
 #             print( bt[1],b)
 # catch untrained examples
+# now done in best_built
              tb = bt[1]
-             if tb < -1.:
-                tb = 0.
+#             if tb < -1.:
+#                tb = 0.
              if tb < b:
                 b = tb
                 r = f.rbm
                 fb = f
           x = r.estimate_EV( a[2])
           new_image[i][j] = x
-          print( x, a[1], fb.centre)
-          sys.stdout.flush()
+#          print( x, a[1], fb.centre)
+#          sys.stdout.flush()
+      an_image = Image.fromarray(np.uint8( rescale(new_image,255.)))
+      an_image.save('rbm.jpg')
           
 #
     the_image = Image.fromarray(np.uint8( rescale(the_adapted_image.the_image,255.)))
