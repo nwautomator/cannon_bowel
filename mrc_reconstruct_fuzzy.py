@@ -65,20 +65,21 @@ def main():
        layers.append(np.float32(layer))
 #layers are the arrays containing the data.
     the_image = np.zeros_like(layers[0])
-    the_image = np.add(the_image, layers[180])
+#    the_image = np.add(the_image, layers[180])
+    the_image = np.add(the_image, layers[40])
 # nvis,nhid set the size of the rbm
     hw = 2
     hw = 1
     hw = 2
     nb = 3
 # the number of outer fuzzy sets
-    nfuzz = 21
+    nfuzz = 41
     the_fuzz = []
     delta = 2./(nfuzz-1)
     for i in range(0,nfuzz):
         cent = -1. + i*delta
         the_fuzz.append( triangle.triangle( cent-delta,cent, cent+delta))
-        the_fuzz[i].associate_rbm( rbm.rbm( (hw*2+1)*(hw*2+1)*nb, 100))
+        the_fuzz[i].associate_rbm( rbm.rbm( (hw*2+1)*(hw*2+1)*nb, 10))
         the_fuzz[i].rbm.its_symmetric()
         the_fuzz[i].rbm.add_fuzzy(-1.,1.,21)
 #    the_rbm = rbm.rbm(  (hw*2+1)*(hw*2+1)*nb, 1000)
