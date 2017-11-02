@@ -70,6 +70,26 @@ class adaptor:
       me.range_delta = float(i-1) #avoid picket fence
       me.nbits = depth
 
+  def tobitmap(me,  depth): 
+      i = depth
+      me.bits = []
+      me.from_bits = []
+      dl = 1./float(depth)
+      for j in range(0,depth):
+#        me.from_bits.append(pow(2,j)*0.5)
+        me.from_bits.append(j*dl)
+        me.bits.append([])
+
+      for l in range(0,depth):
+         for j in range(0,depth):
+            if j == l:
+                 me.bits[l].append(1.)
+            else:
+                 me.bits[l].append(-1.)
+         print me.bits[l]
+      me.range_delta = float(i-1) #avoid picket fence
+      me.nbits = depth
+
   def bits_to_density(me, bits):
      ac = 0.
      for i in range(0,me.nbits):
@@ -78,6 +98,18 @@ class adaptor:
 
   def make_nbit_image(me, depth):
      me.tobits( depth)
+     me.scratch = np.float32(np.zeros( (me.width* me.width*depth)))
+     ma = me.the_image.max()
+     mi = me.the_image.min()
+     me.indexes = np.uint8(np.zeros_like(me.the_image))
+     for i in range(0,me.nx):
+        for j in range(0,me.ny):
+           me.indexes[i][j] = int( (me.the_image[i][j]-mi)/(ma-mi)*me.range_delta)
+#           print( me.indexes[i][j], (me.the_image[i][j]-mi)/(ma-mi),me.the_image[i][j])
+
+
+  def make_nbitmap_image(me, depth):
+     me.tobitmap( depth)
      me.scratch = np.float32(np.zeros( (me.width* me.width*depth)))
      ma = me.the_image.max()
      mi = me.the_image.min()
