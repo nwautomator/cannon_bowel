@@ -94,12 +94,14 @@ class rbm:  #the basic rbm
       me.assign_hidden_and_reconstruction_energy(data)
     else:
       me.assign_hidden_and_energy(data)
-    ib = 0
-    eb = me.energies[0]
-    for i in range(1,me.nhid):
-       if me.energies[i] <= eb:
-          ib = i
-          eb = me.energies[i]
+    ib = np.argmin(me.energies)
+    eb = me.energies[ib]
+#    ib = 0
+#    eb = me.energies[0]
+#    for i in range(1,me.nhid):
+#       if me.energies[i] <= eb:
+#          ib = i
+#          eb = me.energies[i]
     return ib,eb
 
   def the_best_built_layer(me, data, use_best = True):
@@ -107,14 +109,20 @@ class rbm:  #the basic rbm
       me.assign_hidden_and_reconstruction_energy(data)
     else:
       me.assign_hidden_and_energy(data)
-    ib = 0
-    eb = 10.e10
-    for i in range(0,me.nhid):
-       if me.energies[i] < -1.0 and use_best:
-          me.energies[i] = 10.e10
-       if me.energies[i] <= eb:
-          ib = i
-          eb = me.energies[i]
+#    ib = 0
+#    eb = 10.e10
+#    for i in range(0,me.nhid):
+#       if me.energies[i] < -1.0 and use_best:
+#          me.energies[i] = 10.e10
+#       if me.energies[i] <= eb:
+#          ib = i
+#          eb = me.energies[i]
+    ib = np.argmin(me.energies)
+    eb = me.energies[ib]
+    while use_best and eb < -1.:
+           me.energies[ib] = 10.e10
+           ib = np.argmin(me.energies)
+           eb = me.energies[ib]
     return ib,eb
 
   def estimate_EV( me, data, use_best = True):
