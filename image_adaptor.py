@@ -70,6 +70,41 @@ class adaptor:
       me.range_delta = float(i-1) #avoid picket fence
       me.nbits = depth
 
+# hard wired for 8.
+# if it works we'll put code for other 2^n
+# 8 orthogonal vectors
+  def towavelet(me,  depth): 
+       me.bits = []
+       me.bits.append( [1.,1.,1.,1.,1.,1.,1.,1.])
+       me.bits.append( [1.,1.,1.,1.,-1.,-1.,-1.,-1.])
+       me.bits.append( [-1.,-1.,1.,1.,-1.,-1.,1.,1.])
+       me.bits.append( [-1.,-1.,1.,1.,1.,1.,-1.,-1.])
+       me.bits.append( [-1.,1.,-1.,1.,-1.,1.,-1.,1.])
+       me.bits.append( [-1.,1.,-1.,1.,1.,-1.,1.,-1.])
+       me.bits.append( [-1.,1.,1.,-1.,-1.,1.,1.,-1.])
+       me.bits.append( [-1.,1.,1.,-1.,1.,-1.,-1.,1.])
+       me.range_delta = float(depth-1) #avoid picket fence
+       me.nbits = depth
+
+  def bits_to_density(me, bits):
+     ac = 0.
+     for i in range(0,me.nbits):
+         ac = ac + me.from_bits[i]*(bits[i] + 1.)
+     return ac
+
+  def make_nbit_image(me, depth):
+     me.tobits( depth)
+     me.scratch = np.float32(np.zeros( (me.width* me.width*depth)))
+     ma = me.the_image.max()
+     mi = me.the_image.min()
+     me.indexes = np.uint8(np.zeros_like(me.the_image))
+     for i in range(0,me.nx):
+        for j in range(0,me.ny):
+           me.indexes[i][j] = int( (me.the_image[i][j]-mi)/(ma-mi)*me.range_delta)
+#           print( me.indexes[i][j], (me.the_image[i][j]-mi)/(ma-mi),me.the_image[i][j])
+
+
+
   def tobitmap(me,  depth): 
       i = depth
       me.bits = []
@@ -110,6 +145,17 @@ class adaptor:
 
   def make_nbitmap_image(me, depth):
      me.tobitmap( depth)
+     me.scratch = np.float32(np.zeros( (me.width* me.width*depth)))
+     ma = me.the_image.max()
+     mi = me.the_image.min()
+     me.indexes = np.uint8(np.zeros_like(me.the_image))
+     for i in range(0,me.nx):
+        for j in range(0,me.ny):
+           me.indexes[i][j] = int( (me.the_image[i][j]-mi)/(ma-mi)*me.range_delta)
+#           print( me.indexes[i][j], (me.the_image[i][j]-mi)/(ma-mi),me.the_image[i][j])
+
+  def make_nwavelet_image(me, depth):
+     me.towavelet( depth)
      me.scratch = np.float32(np.zeros( (me.width* me.width*depth)))
      ma = me.the_image.max()
      mi = me.the_image.min()
