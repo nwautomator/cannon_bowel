@@ -57,6 +57,10 @@ class fuzzy:
     me.delta = (the_max-the_min)/the_number_of_divisions
     me.nd = the_number_of_divisions
     me.counts = np.float32(np.zeros(the_number_of_divisions))
+    ddi = the_number_of_divisions/2
+    me.args = []
+    for i in range(0, the_number_of_divisions):
+      me.args.append((i-ddi)*me.delta)
 
   def initialize_counts(me):
     me.counts.__imul__(0.)
@@ -78,14 +82,16 @@ class fuzzy:
     ds = me.counts.sum()
     if ds == 0.:
        ds = 1.
+    dsum = np.dot( me.args, me.counts)
+    return dsum/ds  
 #       print me.counts
 #       return (me.my_min + me.my_max)*0.5
-    dsum = 0.
-    ddi = len(me.counts)/2
-    for i in range(0, len(me.counts)):
-       dx = (i-ddi) *me.delta
-       dsum += me.counts[i]*dx
-    return dsum/ds  
+#    dsum = 0.
+#    ddi = len(me.counts)/2
+#    for i in range(0, len(me.counts)):
+#       dx = (i-ddi) *me.delta
+#       dsum += me.counts[i]*dx
+#    return dsum/ds  
 # use numpy you dumb fsck
 #    im = np.argmax(me.counts)
 #    return float(im)*me.delta + me.my_min
