@@ -180,13 +180,14 @@ class rbm:  #the basic rbm
     else:
       me.assign_hidden_and_energy(data)
 # select the row to train.
-    imin = 0
-    emin = me.energies[0]
-    for i in range(1,me.nhid):
-  #    print( emin, me.energies[i])
-      if emin >= me.energies[i] :
-         imin = i
-         emin = me.energies[i]
+    imin = np.argmin(me.energies)
+    emin = me.energies[imin]
+#    imin = 0
+#    emin = me.energies[0]
+#    for i in range(1,me.nhid):
+#      if emin >= me.energies[i] :
+#         imin = i
+#         emin = me.energies[i]
 #
 # emin,imin now point to the best row
 #    
@@ -217,13 +218,15 @@ class rbm:  #the basic rbm
       me.assign_hidden_and_reconstruction_energy(data)
     else:
       me.assign_hidden_and_energy(data)
-# select the row to train.
-    imin = 0
-    emin = me.energies[0]
-    for i in range(1,me.nhid):
-      if emin >= me.energies[i] :
-         imin = i
-         emin = me.energies[i]
+## select the row to train.
+#    imin = 0
+#    emin = me.energies[0]
+#    for i in range(1,me.nhid):
+#      if emin >= me.energies[i] :
+#         imin = i
+#         emin = me.energies[i]
+    imin = np.argmin(me.energies)
+    emin = me.energies[imin]
 #    print(emin)
 #    sys.stdout.flush()
 #
@@ -251,12 +254,14 @@ class rbm:  #the basic rbm
     else:
       me.assign_hidden_and_energy(data)
 # select the row to train.
-    imax = 0
-    emax = me.energies[0]
-    for i in range(1,me.nhid):
-      if emax <= me.energies[i] :
-         imax = i
-         emax = me.energies[i]
+#    imax = 0
+#    emax = me.energies[0]
+#    for i in range(1,me.nhid):
+#      if emax <= me.energies[i] :
+#         imax = i
+#         emax = me.energies[i]
+    imax = np.argmax(me.energies)
+    emax = me.energies[imax]
 #
 # emin,imin now point to the best row
 #    
