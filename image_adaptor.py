@@ -177,12 +177,17 @@ class adaptor:
   def random_bits(me):
     rx = int(random()*(me.nx - me.width))
     ry = int(random()*(me.ny - me.width))
-    for i in range(0, me.width):
-      inx = i*me.width*me.nbits
-      for j in range(0, me.width):
-        inj = j*me.nbits
-        for k in range(0,me.nbits):
-          me.scratch[inx +inj + k ] = (me.bits[me.indexes[rx+i][ry+j]])[k]
+#    for i in range(0, me.width):
+#      inx = i*me.width*me.nbits
+#      for j in range(0, me.width):
+#        inj = j*me.nbits
+#        for k in range(0,me.nbits):
+#          me.scratch[inx +inj + k ] = (me.bits[me.indexes[rx+i][ry+j]])[k]
+    me.scratch = []
+    for i in range(0,me.width):
+      for j in range(0,me.width):
+        me.scratch.append(me.bits[me.indexes[rx+i][ry+j]])
+    me.scratch = np.array(sum(me.scratch,[]))
     return (True, me.the_image[ rx + me.half][ry+me.half], me.scratch) 
    
 
@@ -196,12 +201,17 @@ class adaptor:
     return (True, me.the_image[ rx + me.half][ry+me.half], me.scratch) 
 
   def at_bits(me,rx,ry):
-    for i in range(0, me.width):
-      inx = i*me.width*me.nbits
-      for j in range(0, me.width):
-        inj = j*me.nbits
-        for k in range(0,me.nbits):
-          me.scratch[inx +inj + k ] = (me.bits[me.indexes[rx+i][ry+j]])[k]
+#    for i in range(0, me.width):
+#      inx = i*me.width*me.nbits
+#      for j in range(0, me.width):
+#        inj = j*me.nbits
+#        for k in range(0,me.nbits):
+#          me.scratch[inx +inj + k ] = (me.bits[me.indexes[rx+i][ry+j]])[k]
+    me.scratch = []
+    for i in range(0,me.width):
+      for j in range(0,me.width):
+        me.scratch.append(me.bits[me.indexes[rx+i][ry+j]])
+    me.scratch = np.array(sum(me.scratch,[]))
     return (True, me.the_image[ rx + me.half][ry+me.half], me.scratch) 
    
 
