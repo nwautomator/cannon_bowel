@@ -55,7 +55,7 @@ def rescale(a, upper):
 def main():
     try:
       original = mrcfile.open(sys.argv[1],mode='r')
-      output = mrcfile.open(sys.argv[2],mode='w+')
+      output = mrcfile.new(sys.argv[2],overwrite=True)
     except IOError:
       print("Could not open the input \nUsage tick_mrc inputfile outputfile.")
       sys.exit()
@@ -68,20 +68,20 @@ def main():
 #layers are the arrays containing the data.
 # select a representative layer for training
     the_image = np.zeros_like(layers[0])
-    the_image = np.add(the_image, layers[180])
-#    the_image = np.add(the_image, layers[40])
+#    the_image = np.add(the_image, layers[180])
+    the_image = np.add(the_image, layers[40])
 # nvis,nhid set the size of the rbm
 # hw should reflect the scale of the pixel/feature
 # box ix 2*hw+1 centered on the pixel of interest
+#
+# CONVOLUTIONAL is always 3
     hw = 1
-    hw = 2
-    hw = 3
     nb = 2 #28May example is less well sampled
     nb = 8
 # the number of outer fuzzy sets
 #    nfuzz = 21
-#    nfuzz = 41
-    nfuzz = 21
+    nfuzz = 41
+#    nfuzz = 21
     the_fuzz = []
     delta = 2./(nfuzz-1)
     for i in range(0,nfuzz):
@@ -94,10 +94,12 @@ def main():
 #    the_rbm = rbm.rbm(  (hw*2+1)*(hw*2+1)*nb, 1000)
 #    the_rbm.its_symmetric()
 #    the_rbm.add_fuzzy(-1.,1., 21)
-# -3. inverted the images
+# don't invert
 #    the_adapted_image = adapt.adaptor(  hw, -3., the_image)
-    the_adapted_image = adapt.adaptor(  hw, -3., the_image)
+    the_adapted_image = adapt.adaptor(  hw, 3., the_image)
     the_adapted_image.make_nwavelet_image(nb)
+    overall_mean = the_image.mean()
+    overall_std = the_image.std()
 #    for l in the_rbm.layers:
 #        l = np.add(l, the_adapted_image.next(15,15)[2])
 #    for l in range(0, len(the_rbm.layers)):
@@ -114,34 +116,35 @@ def main():
        for f in the_fuzz:
           rate = f.belief(a[1])*0.1
           if rate > 0. :
-                print(i,a[1],rate,f.rbm.train(a[2],0.1,rate,a[1]))
+                f.rbm.train(a[2],0.1,rate,a[1])
             
     print("fuzzy pass")
     sys.stdout.flush() 
-    for i in xrange(0,10000):
+#50000 was overtrained for 28May
+    for i in xrange(0,50000):
        a = the_adapted_image.random_bits()
        for f in the_fuzz:
-          rate = f.belief(a[1])
+          rate = f.belief(a[1])*0.1
           if rate > 0. :
-                print(i,a[1],rate,f.rbm.train_fuzzy(a[2],0.1,rate,a[1]))
+                f.rbm.train_fuzzy(a[2],0.1,rate,a[1])
             
 
     print("training stops")
     sys.stdout.flush()
     
     new_data = np.float32(np.zeros_like(original.data))
-#    for sec in xrange(0, new_data.shape[0]):
-    for sec in xrange(175,186):
+    for sec in xrange(0, new_data.shape[0]):
       the_image = np.zeros_like(layers[sec])
       the_image = np.add(the_image, layers[sec])
       new_image = np.float32(np.zeros_like(the_image))
 #      the_adapted_image = adapt.adaptor(  hw, -3., the_image)
-      the_adapted_image = adapt.adaptor(  hw, 3., the_image)
-      the_adapted_image.make_nwavelet_image(nb)
+#      the_adapted_image = adapt.adaptor(  hw, 3., the_image)
+      the_adapted_image.the_image = np.clip((the_image.__sub__(overall_mean)).__div__(3.*overall_std),-1.,1.)
+      the_adapted_image.make_nwavelet_bounded_image(nb,1.,-1.)
       for i in xrange(0, the_image.shape[0]-2*hw-1):
 #    for i in xrange(0, 20):
-        print("section",sec," layer", i)
-        sys.stdout.flush()
+#        print("section",sec," layer", i)
+#        sys.stdout.flush()
         for j in range(0,the_image.shape[1]-2*hw-1):
 #        for j in range(0,20):
             a = the_adapted_image.at_bits(i,j)
@@ -217,4 +220,3 @@ main()
 
 
 
-main()

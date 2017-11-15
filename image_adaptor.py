@@ -163,7 +163,16 @@ class adaptor:
      for i in range(0,me.nx):
         for j in range(0,me.ny):
            me.indexes[i][j] = int( (me.the_image[i][j]-mi)/(ma-mi)*me.range_delta)
-#           print( me.indexes[i][j], (me.the_image[i][j]-mi)/(ma-mi),me.the_image[i][j])
+
+  def make_nwavelet_bounded_image(me, depth,ma, mi):
+     me.towavelet( depth)
+     me.scratch = np.float32(np.zeros( (me.width* me.width*depth)))
+#     ma = me.the_image.max()
+#     mi = me.the_image.min()
+     me.indexes = np.uint8(np.zeros_like(me.the_image))
+     for i in range(0,me.nx):
+        for j in range(0,me.ny):
+           me.indexes[i][j] = int( (me.the_image[i][j]-mi)/(ma-mi)*me.range_delta)
 
 
 
