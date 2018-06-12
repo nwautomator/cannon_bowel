@@ -1,10 +1,4 @@
-#!/usr/bin/python
-# (c) 2017 Treadco software.
-# this defaults to python 2 on my machine
-#
-#
-
-license =''' 
+'''
 Copyright (c) 2017  Treadco LLC, Amelia Treader, Robert W Harrison
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -26,224 +20,194 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 '''
 
-
+from __future__ import print_function
+from random import random
 import numpy as np
-import sys,os
-from random import random as random
 
+class Adaptor(object):
+    def __init__(self, half_width, nsigma, an_array):
+        self.width = 1 + 2*half_width  #must be odd x odd to work
+        # keep this so I can undo it later if I want
+        self.mean = an_array.mean()
+        self.scale = an_array.std()
+        self.nsigma = nsigma
+        self.the_image = np.clip((an_array.__sub__(self.mean)).__div__(float(nsigma)*self.scale), -1., 1.)
+        self.scratch = np.float32(np.zeros((self.width* self.width)))
+        self.half = half_width
+        self.ix = 0
+        self.iy = 0
+        self.nx = self.the_image.shape[0]
+        self.ny = self.the_image.shape[1]
+        self.from_bits = []
+        self.range_delta = None
+        self.nbits = None
+        self.bits = None
+        self.indexes = None
 
-class adaptor:
-  def __init__(me, half_width, nsigma, an_array):
-    me.width = 1 + 2*half_width  #must be odd x odd to work
-# keep this so I can undo it later if I want
-    me.mean = an_array.mean()
-    me.scale = an_array.std()
-    me.nsigma = nsigma
-    me.the_image = np.clip( (an_array.__sub__(me.mean)).__div__(float(nsigma)*me.scale), -1., 1.)
-    me.scratch = np.float32(np.zeros( (me.width* me.width)))
-    me.half = half_width
-    me.ix = 0
-    me.iy = 0
-    me.nx = me.the_image.shape[0]
-    me.ny = me.the_image.shape[1]
+    def to_bits(self, depth):
+        i = pow(2, depth)
+        self.bits = []
+        self.from_bits = [pow(2, j)*0.5 for j in range(depth)]
+        k = -1.
+        for j in range(0, i):
+            self.bits.append([k])
+            k = -k
+        # did bit zero by itself because %1
+        for l in range(1, depth):
+            k = -1.
+            sign = 0
+            sign_mod = pow(2, l)
+            for j in range(0, i):
+                self.bits[j].append(k)
+                sign = sign + 1
+                if sign%sign_mod == 0:
+                    k = -k
+        self.range_delta = float(i-1) #avoid picket fence
+        self.nbits = depth
 
-  def tobits(me,  depth): 
-      i = pow(2,depth)     
-      me.bits = []
-      me.from_bits = []
-      for j in range(0,depth):
-        me.from_bits.append(pow(2,j)*0.5)
-      k = -1.
-      for j in range(0,i):
-          me.bits.append([k])
-          k = -k
-# did bit zero by itself because %1
-      for l in range(1,depth):
-          k = -1.
-          sign = 0
-          sign_mod = pow(2,l) 
-          for j in range(0,i):
-             me.bits[j].append(k)
-             sign = sign + 1
-             if sign%sign_mod == 0:
-                 k = -k
-      me.range_delta = float(i-1) #avoid picket fence
-      me.nbits = depth
+    # hard wired for 8.
+    # if it works we'll put code for other 2^n
+    # 8 orthogonal vectors
+    def to_wavelet(self, depth):
+        self.bits = []
+        self.bits.append([1., 1., 1., 1., 1., 1., 1., 1.])
+        self.bits.append([1., 1., 1., 1., -1., -1., -1., -1.])
+        self.bits.append([-1., -1., 1., 1., -1., -1., 1., 1.])
+        self.bits.append([-1., -1., 1., 1., 1., 1., -1., -1.])
+        self.bits.append([-1., 1., -1., 1., -1., 1., -1., 1.])
+        self.bits.append([-1., 1., -1., 1., 1., -1., 1., -1.])
+        self.bits.append([-1., 1., 1., -1., -1., 1., 1., -1.])
+        self.bits.append([-1., 1., 1., -1., 1., -1., -1., 1.])
+        self.range_delta = float(depth-1) #avoid picket fence
+        self.nbits = depth
 
-# hard wired for 8.
-# if it works we'll put code for other 2^n
-# 8 orthogonal vectors
-  def towavelet(me,  depth): 
-       me.bits = []
-       me.bits.append( [1.,1.,1.,1.,1.,1.,1.,1.])
-       me.bits.append( [1.,1.,1.,1.,-1.,-1.,-1.,-1.])
-       me.bits.append( [-1.,-1.,1.,1.,-1.,-1.,1.,1.])
-       me.bits.append( [-1.,-1.,1.,1.,1.,1.,-1.,-1.])
-       me.bits.append( [-1.,1.,-1.,1.,-1.,1.,-1.,1.])
-       me.bits.append( [-1.,1.,-1.,1.,1.,-1.,1.,-1.])
-       me.bits.append( [-1.,1.,1.,-1.,-1.,1.,1.,-1.])
-       me.bits.append( [-1.,1.,1.,-1.,1.,-1.,-1.,1.])
-       me.range_delta = float(depth-1) #avoid picket fence
-       me.nbits = depth
+    def bits_to_density(self, bits):
+        ac = 0.
+        for i in range(self.nbits):
+            ac = ac + self.from_bits[i]*(bits[i] + 1.)
+        return ac
 
-  def bits_to_density(me, bits):
-     ac = 0.
-     for i in range(0,me.nbits):
-         ac = ac + me.from_bits[i]*(bits[i] + 1.)
-     return ac
+    def make_nbit_image(self, depth):
+        self.to_bits(depth)
+        self.scratch = np.float32(np.zeros((self.width* self.width*depth)))
+        ma = self.the_image.max()
+        mi = self.the_image.min()
+        self.indexes = np.uint8(np.zeros_like(self.the_image))
+        for i in range(0, self.nx):
+            for j in range(0, self.ny):
+                self.indexes[i][j] = int((self.the_image[i][j]-mi)/(ma-mi)*self.range_delta)
 
-  def make_nbit_image(me, depth):
-     me.tobits( depth)
-     me.scratch = np.float32(np.zeros( (me.width* me.width*depth)))
-     ma = me.the_image.max()
-     mi = me.the_image.min()
-     me.indexes = np.uint8(np.zeros_like(me.the_image))
-     for i in range(0,me.nx):
-        for j in range(0,me.ny):
-           me.indexes[i][j] = int( (me.the_image[i][j]-mi)/(ma-mi)*me.range_delta)
-#           print( me.indexes[i][j], (me.the_image[i][j]-mi)/(ma-mi),me.the_image[i][j])
+    def to_bitmap(self, depth):
+        i = depth
+        self.bits = []
+        self.from_bits = []
+        dl = 1./float(depth)
+        for j in range(0, depth):
+            self.from_bits.append(j*dl)
+            self.bits.append([])
 
+        for l in range(0, depth):
+            for j in range(0, depth):
+                if j == l:
+                    self.bits[l].append(1.)
+                else:
+                    self.bits[l].append(-1.)
+            print(self.bits[l])
+        self.range_delta = float(i-1) #avoid picket fence
+        self.nbits = depth
 
+    def make_nbit_image(self, depth):
+        self.to_bits(depth)
+        self.scratch = np.float32(np.zeros((self.width* self.width*depth)))
+        ma = self.the_image.max()
+        mi = self.the_image.min()
+        self.indexes = np.uint8(np.zeros_like(self.the_image))
+        for i in range(0, self.nx):
+            for j in range(0, self.ny):
+                self.indexes[i][j] = int((self.the_image[i][j]-mi)/(ma-mi)*self.range_delta)
 
-  def tobitmap(me,  depth): 
-      i = depth
-      me.bits = []
-      me.from_bits = []
-      dl = 1./float(depth)
-      for j in range(0,depth):
-#        me.from_bits.append(pow(2,j)*0.5)
-        me.from_bits.append(j*dl)
-        me.bits.append([])
+    def make_nbitmap_image(self, depth):
+        self.to_bitmap(depth)
+        self.scratch = np.float32(np.zeros((self.width*self.width*depth)))
+        ma = self.the_image.max()
+        mi = self.the_image.min()
+        self.indexes = np.uint8(np.zeros_like(self.the_image))
+        for i in range(0, self.nx):
+            for j in range(0, self.ny):
+                self.indexes[i][j] = int((self.the_image[i][j]-mi)/(ma-mi)*self.range_delta)
 
-      for l in range(0,depth):
-         for j in range(0,depth):
-            if j == l:
-                 me.bits[l].append(1.)
-            else:
-                 me.bits[l].append(-1.)
-         print me.bits[l]
-      me.range_delta = float(i-1) #avoid picket fence
-      me.nbits = depth
+    def make_nwavelet_image(self, depth):
+        self.to_wavelet(depth)
+        self.scratch = np.float32(np.zeros((self.width*self.width*depth)))
+        ma = self.the_image.max()
+        mi = self.the_image.min()
+        self.indexes = np.uint8(np.zeros_like(self.the_image))
+        for i in range(0, self.nx):
+            for j in range(0, self.ny):
+                self.indexes[i][j] = int((self.the_image[i][j]-mi)/(ma-mi)*self.range_delta)
 
-  def bits_to_density(me, bits):
-     ac = 0.
-     for i in range(0,me.nbits):
-         ac = ac + me.from_bits[i]*(bits[i] + 1.)
-     return ac
+    def to_original(self, apixel):
+        return apixel*self.scale*(float(self.nsigma)) + self.mean
 
-  def make_nbit_image(me, depth):
-     me.tobits( depth)
-     me.scratch = np.float32(np.zeros( (me.width* me.width*depth)))
-     ma = me.the_image.max()
-     mi = me.the_image.min()
-     me.indexes = np.uint8(np.zeros_like(me.the_image))
-     for i in range(0,me.nx):
-        for j in range(0,me.ny):
-           me.indexes[i][j] = int( (me.the_image[i][j]-mi)/(ma-mi)*me.range_delta)
-#           print( me.indexes[i][j], (me.the_image[i][j]-mi)/(ma-mi),me.the_image[i][j])
+    def reset(self):
+        self.ix = 0
+        self.iy = 0
 
+    def random_bits(self):
+        rx = int(random()*(self.nx - self.width))
+        ry = int(random()*(self.ny - self.width))
+        self.scratch = []
+        for i in range(0, self.width):
+            for j in range(0, self.width):
+                self.scratch.append(self.bits[self.indexes[rx+i][ry+j]])
+        self.scratch = np.array(sum(self.scratch, []))
+        return (True, self.the_image[rx+self.half][ry+self.half], self.scratch)
 
-  def make_nbitmap_image(me, depth):
-     me.tobitmap( depth)
-     me.scratch = np.float32(np.zeros( (me.width* me.width*depth)))
-     ma = me.the_image.max()
-     mi = me.the_image.min()
-     me.indexes = np.uint8(np.zeros_like(me.the_image))
-     for i in range(0,me.nx):
-        for j in range(0,me.ny):
-           me.indexes[i][j] = int( (me.the_image[i][j]-mi)/(ma-mi)*me.range_delta)
-#           print( me.indexes[i][j], (me.the_image[i][j]-mi)/(ma-mi),me.the_image[i][j])
+    def random(self):
+        rx = int(random()*(self.nx-self.width))
+        ry = int(random()*(self.ny-self.width))
+        for i in range(0, self.width):
+            inx = i*self.width
+            for j in range(0, self.width):
+                self.scratch[inx +j] = self.the_image[rx+i][ry+j]
+        return (True, self.the_image[rx+self.half][ry+self.half], self.scratch)
 
-  def make_nwavelet_image(me, depth):
-     me.towavelet( depth)
-     me.scratch = np.float32(np.zeros( (me.width* me.width*depth)))
-     ma = me.the_image.max()
-     mi = me.the_image.min()
-     me.indexes = np.uint8(np.zeros_like(me.the_image))
-     for i in range(0,me.nx):
-        for j in range(0,me.ny):
-           me.indexes[i][j] = int( (me.the_image[i][j]-mi)/(ma-mi)*me.range_delta)
-#           print( me.indexes[i][j], (me.the_image[i][j]-mi)/(ma-mi),me.the_image[i][j])
+    def at_bits(self, rx, ry):
+        self.scratch = []
+        for i in range(0, self.width):
+            for j in range(0, self.width):
+                self.scratch.append(self.bits[self.indexes[rx+i][ry+j]])
+        self.scratch = np.array(sum(self.scratch, []))
+        return (True, self.the_image[rx+self.half][ry+self.half], self.scratch)
 
+    def at(self, rx, ry):
+        for i in range(0, self.width):
+            inx = i*self.width
+            for j in range(0, self.width):
+                self.scratch[inx+j] = self.the_image[rx+i][ry+j]
+        return (True, self.the_image[rx+self.half][ry+self.half], self.scratch)
 
+    def next(self, dx, dy=0):
+        jx = self.ix+dx
+        jy = self.iy
+        if dy == 0:
+            if jx > self.nx - self.width:
+                jy = self.iy + 1
+                jx = 0
+        else:
+            jy = self.iy + dy
+        if jy >= self.ny - self.width or jx >= self.nx - self.width:
+            return (False, 0., self.scratch)
+        self.ix = jx
+        self.iy = jy
+        for i in range(0, self.width):
+            inx = i*self.width
+            for j in range(0, self.width):
+                self.scratch[inx+j] = self.the_image[self.ix+i][self.iy+j]
+        return (True, self.the_image[self.ix + self.half][self.iy+self.half], self.scratch)
 
-  def to_original(me, apixel):
-    return apixel*me.scale*(float(me.sigma)) + me.mean
+def main():
+    print("Test method for adaptor")
 
-  def reset(me):
-      me.ix = 0
-      me.iy = 0
-
-  def random_bits(me):
-    rx = int(random()*(me.nx - me.width))
-    ry = int(random()*(me.ny - me.width))
-#    for i in range(0, me.width):
-#      inx = i*me.width*me.nbits
-#      for j in range(0, me.width):
-#        inj = j*me.nbits
-#        for k in range(0,me.nbits):
-#          me.scratch[inx +inj + k ] = (me.bits[me.indexes[rx+i][ry+j]])[k]
-    me.scratch = []
-    for i in range(0,me.width):
-      for j in range(0,me.width):
-        me.scratch.append(me.bits[me.indexes[rx+i][ry+j]])
-    me.scratch = np.array(sum(me.scratch,[]))
-    return (True, me.the_image[ rx + me.half][ry+me.half], me.scratch) 
-   
-
-  def random(me):
-    rx = int(random()*(me.nx - me.width))
-    ry = int(random()*(me.ny - me.width))
-    for i in range(0, me.width):
-      inx = i*me.width
-      for j in range(0, me.width):
-        me.scratch[inx +j] = me.the_image[rx+i][ry+j]
-    return (True, me.the_image[ rx + me.half][ry+me.half], me.scratch) 
-
-  def at_bits(me,rx,ry):
-#    for i in range(0, me.width):
-#      inx = i*me.width*me.nbits
-#      for j in range(0, me.width):
-#        inj = j*me.nbits
-#        for k in range(0,me.nbits):
-#          me.scratch[inx +inj + k ] = (me.bits[me.indexes[rx+i][ry+j]])[k]
-    me.scratch = []
-    for i in range(0,me.width):
-      for j in range(0,me.width):
-        me.scratch.append(me.bits[me.indexes[rx+i][ry+j]])
-    me.scratch = np.array(sum(me.scratch,[]))
-    return (True, me.the_image[ rx + me.half][ry+me.half], me.scratch) 
-   
-
-  def at(me,rx,ry):
-    for i in range(0, me.width):
-      inx = i*me.width
-      for j in range(0, me.width):
-        me.scratch[inx +j] = me.the_image[rx+i][ry+j]
-    return (True, me.the_image[ rx + me.half][ry+me.half], me.scratch) 
-   
-
-  def next(me, dx,dy=0):
-    jx = me.ix +dx
-    jy = me.iy
-    if dy == 0 :
-      if jx > me.nx - me.width:
-          jy = me.iy + 1
-          jx = 0
-    else:
-       jy = me.iy + dy
-    if jy >= me.ny - me.width or jx >= me.nx - me.width:
-       return (False, 0.,me.scratch)  
-    me.ix = jx
-    me.iy = jy
-    for i in range(0, me.width):
-      inx = i*me.width
-      for j in range(0, me.width):
-        me.scratch[inx +j] = me.the_image[me.ix+i][me.iy+j]
-    return (True, me.the_image[ me.ix + me.half][me.iy+me.half], me.scratch) 
-
-
-#def main():
-#   print("Test method for adaptor")
-
-#main()
+if __name__ == '__main__':
+    main()
