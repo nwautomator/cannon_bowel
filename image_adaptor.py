@@ -24,15 +24,17 @@ from __future__ import print_function
 from random import random
 import numpy as np
 
+
 class Adaptor(object):
     def __init__(self, half_width, nsigma, an_array):
-        self.width = 1 + 2*half_width  #must be odd x odd to work
+        self.width = 1 + 2*half_width  # must be odd x odd to work
         # keep this so I can undo it later if I want
         self.mean = an_array.mean()
         self.scale = an_array.std()
         self.nsigma = nsigma
-        self.the_image = np.clip((an_array.__sub__(self.mean)).__div__(float(nsigma)*self.scale), -1., 1.)
-        self.scratch = np.float32(np.zeros((self.width* self.width)))
+        self.the_image = np.clip((an_array.__sub__(self.mean)).__div__(
+            float(nsigma)*self.scale), -1., 1.)
+        self.scratch = np.float32(np.zeros((self.width * self.width)))
         self.half = half_width
         self.ix = 0
         self.iy = 0
@@ -60,15 +62,14 @@ class Adaptor(object):
             for j in range(0, i):
                 self.bits[j].append(k)
                 sign = sign + 1
-                if sign%sign_mod == 0:
+                if sign % sign_mod == 0:
                     k = -k
-        self.range_delta = float(i-1) #avoid picket fence
+        self.range_delta = float(i-1)  # avoid picket fence
         self.nbits = depth
 
-    # hard wired for 8.
-    # if it works we'll put code for other 2^n
-    # 8 orthogonal vectors
     def to_wavelet(self, depth):
+        """ Hard wired for 8. If it works we'll put code for other 2^n
+        8 orthogonal vectors. """
         self.bits = []
         self.bits.append([1., 1., 1., 1., 1., 1., 1., 1.])
         self.bits.append([1., 1., 1., 1., -1., -1., -1., -1.])
@@ -78,7 +79,7 @@ class Adaptor(object):
         self.bits.append([-1., 1., -1., 1., 1., -1., 1., -1.])
         self.bits.append([-1., 1., 1., -1., -1., 1., 1., -1.])
         self.bits.append([-1., 1., 1., -1., 1., -1., -1., 1.])
-        self.range_delta = float(depth-1) #avoid picket fence
+        self.range_delta = float(depth-1)  # avoid picket fence
         self.nbits = depth
 
     def bits_to_density(self, bits):
@@ -89,13 +90,14 @@ class Adaptor(object):
 
     def make_nbit_image(self, depth):
         self.to_bits(depth)
-        self.scratch = np.float32(np.zeros((self.width* self.width*depth)))
+        self.scratch = np.float32(np.zeros((self.width * self.width*depth)))
         ma = self.the_image.max()
         mi = self.the_image.min()
         self.indexes = np.uint8(np.zeros_like(self.the_image))
         for i in range(0, self.nx):
             for j in range(0, self.ny):
-                self.indexes[i][j] = int((self.the_image[i][j]-mi)/(ma-mi)*self.range_delta)
+                self.indexes[i][j] = int(
+                    (self.the_image[i][j]-mi)/(ma-mi)*self.range_delta)
 
     def to_bitmap(self, depth):
         i = depth
@@ -113,18 +115,8 @@ class Adaptor(object):
                 else:
                     self.bits[l].append(-1.)
             print(self.bits[l])
-        self.range_delta = float(i-1) #avoid picket fence
+        self.range_delta = float(i-1)  # avoid picket fence
         self.nbits = depth
-
-    def make_nbit_image(self, depth):
-        self.to_bits(depth)
-        self.scratch = np.float32(np.zeros((self.width* self.width*depth)))
-        ma = self.the_image.max()
-        mi = self.the_image.min()
-        self.indexes = np.uint8(np.zeros_like(self.the_image))
-        for i in range(0, self.nx):
-            for j in range(0, self.ny):
-                self.indexes[i][j] = int((self.the_image[i][j]-mi)/(ma-mi)*self.range_delta)
 
     def make_nbitmap_image(self, depth):
         self.to_bitmap(depth)
@@ -134,7 +126,8 @@ class Adaptor(object):
         self.indexes = np.uint8(np.zeros_like(self.the_image))
         for i in range(0, self.nx):
             for j in range(0, self.ny):
-                self.indexes[i][j] = int((self.the_image[i][j]-mi)/(ma-mi)*self.range_delta)
+                self.indexes[i][j] = int(
+                    (self.the_image[i][j]-mi)/(ma-mi)*self.range_delta)
 
     def make_nwavelet_image(self, depth):
         self.to_wavelet(depth)
@@ -144,7 +137,8 @@ class Adaptor(object):
         self.indexes = np.uint8(np.zeros_like(self.the_image))
         for i in range(0, self.nx):
             for j in range(0, self.ny):
-                self.indexes[i][j] = int((self.the_image[i][j]-mi)/(ma-mi)*self.range_delta)
+                self.indexes[i][j] = int(
+                    (self.the_image[i][j]-mi)/(ma-mi)*self.range_delta)
 
     def to_original(self, apixel):
         return apixel*self.scale*(float(self.nsigma)) + self.mean
@@ -169,7 +163,7 @@ class Adaptor(object):
         for i in range(0, self.width):
             inx = i*self.width
             for j in range(0, self.width):
-                self.scratch[inx +j] = self.the_image[rx+i][ry+j]
+                self.scratch[inx + j] = self.the_image[rx+i][ry+j]
         return (True, self.the_image[rx+self.half][ry+self.half], self.scratch)
 
     def at_bits(self, rx, ry):
@@ -205,6 +199,7 @@ class Adaptor(object):
             for j in range(0, self.width):
                 self.scratch[inx+j] = self.the_image[self.ix+i][self.iy+j]
         return (True, self.the_image[self.ix + self.half][self.iy+self.half], self.scratch)
+
 
 def main():
     print("Test method for adaptor")

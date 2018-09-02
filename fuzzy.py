@@ -34,9 +34,11 @@ import numpy as np
 # roll your own if need be.
 #
 
+
 class Fuzzy(object):
     ''' Python version of the fuzzy RBM supports the
     non-fuzzy version. '''
+
     def __init__(self, the_min, the_max, num_dimensions):
         self.my_min = the_min
         self.my_max = the_max
@@ -50,10 +52,10 @@ class Fuzzy(object):
         self.counts.__imul__(0.)
 
     def add(self, what):
-        i = int((what - self.my_min)/self.delta +0.5)
+        i = int((what - self.my_min)/self.delta + 0.5)
         # insert rangechecking here.
         if i >= self.num_dimensions:
-            i = self.num_dimensions -1
+            i = self.num_dimensions - 1
         if i < 0:
             i = 0
         self.counts[i] += 1.
@@ -79,13 +81,14 @@ class Fuzzy(object):
             return 1.
         im = int((avalue - self.my_min)/(self.my_max-self.my_min)+0.5)
         if im >= self.num_dimensions:
-            im = self.num_dimensions -1
+            im = self.num_dimensions - 1
         if im < 0:
             im = 0
         i = np.argmax(self.counts)
         if abs(i-im) < 2:
             return 1.
         return -0.1
+
 
 def main():
     print("This is the main routine, defined for testing purposes")
@@ -103,6 +106,7 @@ def main():
     simon.add(0.2)
     print(simon.counts)
     print(simon.expected_value())
+
 
 if __name__ == '__main__':
     main()

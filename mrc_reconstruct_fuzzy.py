@@ -1,14 +1,4 @@
-#!/usr/bin/python
-# this defaults to python 2 on my machine
-# (c) 2017 Treadco software.
-#
-# Regularized image sharpening library
-#
-# MRC file version
-#
-# rbm is trained on image, then reconstruction is used to generate a new one.
-# 
-license = ''' Copyright (c) 2017  Treadco LLC, Amelia Treader, Robert W Harrison
+''' Copyright (c) 2017  Treadco LLC, Amelia Treader, Robert W Harrison
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights
@@ -28,90 +18,76 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 '''
 
+# Regularized image sharpening library
+# MRC file version
+#
+# rbm is trained on image, then reconstruction is used to generate a new one.
+#
+
 import numpy as np
-import sys,os
+import sys
+import os
 from PIL import Image
 from PIL import ImageChops
-#from pylab import *
 import mrcfile
 import rbm
 import fuzzy
 import image_adaptor as adapt
 
-
 def rescale(a, upper):
-   amax = a.max()
-   amin = a.min()
-   amax -= amin
-   return (a.__sub__(amin)).__mul__(upper/amax)
-#   b = a.__sub__(amin)
-#   c = b.__mul__(upper/amax)
-#   return c
-
-
+    amax = a.max()
+    amin = a.min()
+    amax -= amin
+    return (a.__sub__(amin)).__mul__(upper/amax)
 
 def main():
     try:
-      original = mrcfile.open(sys.argv[1],mode='r')
+        original = mrcfile.open(sys.argv[1], mode='r')
     except IOError:
-      print("Could not open the input \nUsage tick_mrc inputfile outputfile.")
-      sys.exit()
+        print("Could not open the input \nUsage tick_mrc inputfile outputfile.")
+        sys.exit()
 
-# create list of layers.
+    # create list of layers.
     layers = []
     for layer in original.data:
-       layers.append(np.float32(layer))
-#layers are the arrays containing the data.
+        layers.append(np.float32(layer))
+    # layers are the arrays containing the data.
     the_image = np.zeros_like(layers[0])
     the_image = np.add(the_image, layers[40])
-# nvis,nhid
+    # nvis,nhid
     hw = 2
     nb = 3
-    the_rbm = rbm.rbm(  (hw*2+1)*(hw*2+1)*nb, 1000)
+    the_rbm = rbm.RBM((hw*2+1)*(hw*2+1)*nb, 1000)
     the_rbm.its_symmetric()
-    the_rbm.add_fuzzy(-1.,1., 21)
-    the_adapted_image = adapt.adaptor(  hw, 3., the_image)
+    the_rbm.add_fuzzy(-1., 1., 21)
+    the_adapted_image = adapt.Adaptor(hw, 3., the_image)
     the_adapted_image.make_nbit_image(nb)
-#    for l in the_rbm.layers:
-#        l = np.add(l, the_adapted_image.next(15,15)[2])
-    for l in range(0, len(the_rbm.layers)):
-       the_rbm.layers[l] = np.add( the_rbm.layers[l], the_adapted_image.random_bits()[2])
+    for l in range(len(the_rbm.layers)):
+        the_rbm.layers[l] = np.add(
+            the_rbm.layers[l], the_adapted_image.random_bits()[2])
     the_adapted_image.reset()
-    
-    
+
     print("training starts")
     sys.stdout.flush()
-  #  a = the_adapted_image.next(1)
-    for i in xrange(0,2000):
-       a = the_adapted_image.random_bits()
-       print(i,a[1],the_rbm.train_fuzzy(a[2],0.1,1.0,a[1]))
-#       if i > 1000:
-#        print a[2]
-#        print the_rbm.reconstruct(a[2])
-#       print(i, a[1])
-
+    for i in range(2000):
+        a = the_adapted_image.random_bits()
+        print(i, a[1], the_rbm.train_fuzzy(a[2], 0.1, 1.0, a[1]))
     print("training stops")
     sys.stdout.flush()
-    
-    new_image = np.float32(np.zeros_like(the_image))
-#    for i in xrange(0, the_image.shape[0]-2*hw-1):
-    for i in xrange(0, 20):
-      print("layer", i)
-      sys.stdout.flush()
-      for j in range(0,the_image.shape[1]-2*hw-1):
-#      for j in range(0,20):
-          a = the_adapted_image.at_bits(i,j)
-          b = the_rbm.reconstruct(a[2])
-          new_image[i+hw+1][j+hw+1] = the_rbm.estimate_EV(a[2])
 
-    the_image = Image.fromarray(np.uint8( rescale(the_adapted_image.the_image,255.)))
+    new_image = np.array(np.zeros_like(the_image), dtype=np.float32)
+    for i in range(20):
+        print("layer", i)
+        sys.stdout.flush()
+        for j in range(the_image.shape[1]-2*hw-1):
+            a = the_adapted_image.at_bits(i, j)
+            new_image[i+hw+1][j+hw+1] = the_rbm.estimate_expected_value(a[2])
+
+    the_image = Image.fromarray(
+        np.uint8(rescale(the_adapted_image.the_image, 255.)))
     the_image.save('raw.jpg')
-    the_image = Image.fromarray(np.uint8( rescale(new_image,255.)))
+    the_image = Image.fromarray(np.uint8(rescale(new_image, 255.)))
     the_image.save('rbm.jpg')
 
-
-
-
-
-
-main()
+if __name__ == '__main__':
+    main()
