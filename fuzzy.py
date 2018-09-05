@@ -44,7 +44,7 @@ class Fuzzy(object):
         self.my_max = the_max
         self.delta = (the_max-the_min)/num_dimensions
         self.num_dimensions = num_dimensions
-        self.counts = np.float32(np.zeros(num_dimensions))
+        self.counts = np.array(np.zeros(num_dimensions), dtype=np.float32)
         ddi = num_dimensions/2
         self.args = [(i-ddi)*self.delta for i in range(num_dimensions)]
 
@@ -89,7 +89,6 @@ class Fuzzy(object):
             return 1.
         return -0.1
 
-
 def main():
     print("This is the main routine, defined for testing purposes")
     simon = Fuzzy(-1., 1., 10)
@@ -106,7 +105,6 @@ def main():
     simon.add(0.2)
     print(simon.counts)
     print(simon.expected_value())
-
 
 if __name__ == '__main__':
     main()

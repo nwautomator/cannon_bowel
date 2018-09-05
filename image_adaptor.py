@@ -24,7 +24,6 @@ from __future__ import print_function
 from random import random
 import numpy as np
 
-
 class Adaptor(object):
     def __init__(self, half_width, nsigma, an_array):
         self.width = 1 + 2*half_width  # must be odd x odd to work
@@ -199,7 +198,6 @@ class Adaptor(object):
             for j in range(0, self.width):
                 self.scratch[inx+j] = self.the_image[self.ix+i][self.iy+j]
         return (True, self.the_image[self.ix + self.half][self.iy+self.half], self.scratch)
-
 
 def main():
     print("Test method for adaptor")
