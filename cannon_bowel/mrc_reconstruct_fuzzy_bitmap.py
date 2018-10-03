@@ -32,10 +32,10 @@ import os
 from PIL import Image
 from PIL import ImageChops
 import mrcfile
-import rbm
-import fuzzy
+from cannon_bowel import rbm
+from cannon_bowel import fuzzy
 import image_adaptor as adapt
-import triangle
+from cannon_bowel import triangle
 
 def rescale(a, upper):
     amax = a.max()

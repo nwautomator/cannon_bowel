@@ -1,0 +1,9 @@
+unittests:
+  stage: test
+  image: cfreas:pythondev
+  script:
+    - virtualenv --python=python3.5 --no-site-packages .pyenv
+    - . .pyenv/bin/activate
+    - pip install --quiet nosexcover
+    - pip install --quiet pylint
+    - nosetests3 --with-xcoverage --with-xunit --cover-package=tests --cover-erase

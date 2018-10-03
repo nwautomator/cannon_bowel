@@ -25,7 +25,7 @@ import sys
 import os
 from math import exp as exp
 
-import fuzzy
+from cannon_bowel import fuzzy
 
 # python version of the fuzzy rbm
 # supports the non-fuzzy version.
