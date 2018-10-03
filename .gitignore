@@ -2,7 +2,6 @@
 *.swp
 .vscode
 cannon_bowel.egg-info
-tests
 venv
 *.xml
 .coverage
