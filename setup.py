@@ -6,5 +6,5 @@ setup(
     description='Cannon Bowel Restricted Boltzmann Machine',
     author='Treadco',
     packages=['cannon_bowel'],
-    install_requires=['numpy', 'Pillow'], #external packages as dependencies
+    install_requires=['numpy', 'Pillow', 'mrcfile'], #external packages as dependencies
 )
